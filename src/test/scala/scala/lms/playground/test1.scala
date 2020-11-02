@@ -70,7 +70,32 @@ class IsoTest extends TutorialFunSuite {
 
   }
 
-/**
+  def clientCode(implicit dsl : DSL) : Unit = {
+    // primitives: Int resolves to IR.Int as opposed to scala.Int (due to import)
+
+    import dsl._
+
+    val x : Int = 5
+
+    // conditional: 3 and 7 (type scala.Int) are automatically lifted
+
+    val y = if (true) 3 + x else 7
+
+    // arrays: constructor requires T:Typ
+
+    val xs = NewArray[Int](7)
+
+    xs(y) = x
+
+    // nested arrays work as well
+
+    val ys = NewArray[Array[Int]](1)
+
+    ys(0) = xs
+  }
+
+
+  /**
 Test Case (Client Code)
 -----------------------
 
@@ -79,30 +104,12 @@ leverage staging since we have acces to both scala.Int
 and IR.Int.
 */
   test("one") {
+
     val IR: DSL = new Impl {}
-    val res = utils.captureOut {
-      import IR._
 
-      // primitives: Int resolves to IR.Int as opposed to scala.Int (due to import)
+    val res = utils.captureOut { clientCode(IR) }
 
-      val x: Int = 5
-
-      // conditional: 3 and 7 (type scala.Int) are automatically lifted
-
-      val y = if (true) 3 + x else 7
-
-      // arrays: constructor requires T:Typ
-
-      val xs = NewArray[Int](7)
-
-      xs(y) = x
-
-      // nested arrays work as well
-
-      val ys = NewArray[Array[Int]](1)
-
-      ys(0) = xs      
-    }
+    println(res)
     check("one", res)
   }
 
@@ -147,6 +154,9 @@ It is stripped down here to be self-contained.
     type Typ[T]
     @implicitNotFound("${A} cannot be implicitly lifted to ${B}")
     type Lift[A,B]
+    //  [T:Typ] is a context bounds:
+    //  https://docs.scala-lang.org/tutorials/FAQ/context-bounds.html
+    //  ProgInScala3ed, Sec 21.6
     implicit def identLift[T:Typ]: Lift[T,T]
     implicit def lift[T,U](x:T)(implicit e: Lift[T,U]): U
   }
@@ -171,7 +181,7 @@ It is stripped down here to be self-contained.
 
   trait Impl extends BaseExp with DSL {
     case class Int(e: Exp) extends IntOps {
-      def +(y: Int) = Int(e+"+"+y.e)
+      def +(y: Int) = Int(e+"+"+y.e)  // perform online partial evaluation here
       def -(y: Int) = Int(e+"-"+y.e)
       def *(y: Int) = Int(e+"*"+y.e)
       def /(y: Int) = Int(e+"/"+y.e)

@@ -20,9 +20,9 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.2" % "test"
 )
 
-libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _ % "compile")
+libraryDependencies += { (scalaVersion)("org.scala-lang" % "scala-reflect" % _ % "compile").value }
 
-libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _ % "test")
+libraryDependencies += { (scalaVersion)("org.scala-lang" % "scala-compiler" % _ % "test").value }
 
 addCompilerPlugin("org.scalamacros" % "paradise" % paradiseVersion cross CrossVersion.full)
 
